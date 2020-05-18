@@ -1,68 +1,106 @@
 {
-  "name": "grpc-js-repository",
-  "version": "0.1.0",
-  "description": "Dummy package for the grpc-node repository",
-  "private": true,
-  "keywords": [],
-  "author": {
-    "name": "Google Inc."
+  "name": "grpc",
+  "version": "1.24.2",
+  "author": "Google Inc.",
+  "description": "gRPC Library for Node",
+  "homepage": "https://grpc.io/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grpc/grpc-node.git"
   },
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@types/execa": "^0.8.0",
-    "@types/gulp": "^4.0.5",
-    "@types/gulp-mocha": "0.0.31",
-    "@types/ncp": "^2.0.1",
-    "@types/node": "^8.0.32",
-    "@types/pify": "^3.0.0",
-    "@types/semver": "^5.5.0",
-    "coveralls": "^3.0.1",
-    "del": "^3.0.0",
-    "execa": "^0.8.0",
-    "gulp": "^4.0.1",
-    "gulp-jsdoc3": "^1.0.1",
-    "gulp-jshint": "^2.0.4",
-    "gulp-mocha": "^4.3.1",
-    "gulp-sourcemaps": "^2.6.1",
-    "gulp-tslint": "^8.1.1",
-    "gulp-typescript": "^3.2.2",
-    "gulp-util": "^3.0.8",
-    "jsdoc": "^3.3.2",
-    "jshint": "^2.9.5",
-    "make-dir": "^1.1.0",
-    "merge2": "^1.1.0",
-    "mocha": "^3.5.3",
-    "mocha-jenkins-reporter": "^0.3.9",
-    "ncp": "^2.0.0",
-    "nyc": "^11.7.2",
-    "pify": "^3.0.0",
-    "run-sequence": "^2.2.0",
-    "semver": "^5.5.0",
-    "symlink": "^2.1.0",
-    "through2": "^2.0.3",
-    "ts-node": "^8.1.0",
-    "tslint": "^5.5.0",
-    "typescript": "^3.5.3",
-    "xml2js": "^0.4.19"
-  },
+  "bugs": "https://github.com/grpc/grpc-node/issues",
   "contributors": [
     {
-      "name": "Google Inc."
+      "name": "Michael Lumish",
+      "email": "mlumish@google.com"
     }
   ],
-  "nyc": {
-    "include": [
-      "packages/grpc-health-check/health.js",
-      "packages/grpc-js/build/src/*",
-      "packages/grpc-native-core/index.js",
-      "packages/grpc-native-core/src/*.js",
-      "packages/proto-loader/build/src/*"
-    ],
-    "cache": true,
-    "all": true
+  "directories": {
+    "lib": "src"
   },
   "scripts": {
-    "test": "nyc gulp test && GRPC_DNS_RESOLVER=ares nyc gulp nativeTestOnly",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "build": "node-pre-gyp build",
+    "electron-build": "node-pre-gyp configure build --runtime=electron --disturl=https://atom.io/download/atom-shell",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha test",
+    "install": "node-pre-gyp install --fallback-to-build --library=static_library",
+    "prepack": "git submodule update --init --recursive && npm install"
+  },
+  "bundledDependencies": [
+    "node-pre-gyp"
+  ],
+  "dependencies": {
+    "@types/bytebuffer": "^5.0.40",
+    "lodash.camelcase": "^4.3.0",
+    "lodash.clone": "^4.5.0",
+    "nan": "^2.13.2",
+    "node-pre-gyp": "^0.14.0",
+    "protobufjs": "^5.0.3"
+  },
+  "devDependencies": {
+    "body-parser": "^1.15.2",
+    "electron-mocha": "^3.1.1",
+    "express": "^4.14.0",
+    "google-protobuf": "^3.0.0",
+    "istanbul": "^0.4.4",
+    "lodash": "^4.17.4",
+    "minimist": "^1.1.0",
+    "node-forge": "^0.7.5",
+    "poisson-process": "^0.2.1"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "binary": {
+    "module_name": "grpc_node",
+    "module_path": "src/node/extension_binary/{node_abi}-{platform}-{arch}-{libc}",
+    "host": "https://node-precompiled-binaries.grpc.io/",
+    "remote_path": "{name}/v{version}",
+    "package_name": "{node_abi}-{platform}-{arch}-{libc}.tar.gz"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "deps/grpc/etc/",
+    "index.js",
+    "index.d.ts",
+    "src/*.js",
+    "ext/*.{cc,h}",
+    "deps/grpc/include/grpc/**/*.h",
+    "deps/grpc/src/core/**/*.{c,cc,h}",
+    "deps/grpc/src/boringssl/err_data.c",
+    "deps/grpc/third_party/abseil-cpp/absl/**/*.{h,hh,inc}",
+    "deps/grpc/third_party/boringssl/crypto/**/*.{c,cc,h}",
+    "deps/grpc/third_party/boringssl/include/**/*.{c,cc,h}",
+    "deps/grpc/third_party/boringssl/ssl/**/*.{c,cc,h}",
+    "deps/grpc/third_party/boringssl/third_party/**/*.{c,h}",
+    "deps/grpc/third_party/nanopb/*.{c,cc,h}",
+    "deps/grpc/third_party/upb/**/*.{c,h,inc}",
+    "deps/grpc/third_party/zlib/**/*.{c,cc,h}",
+    "deps/grpc/third_party/address_sorting/**/*.{c,h}",
+    "deps/grpc/third_party/cares/**/*.{c,h}",
+    "binding.gyp"
+  ],
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "license": "Apache-2.0",
+  "jshintConfig": {
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
+    "esnext": true,
+    "freeze": true,
+    "immed": true,
+    "indent": 2,
+    "latedef": "nofunc",
+    "maxlen": 80,
+    "mocha": true,
+    "newcap": true,
+    "node": true,
+    "noarg": true,
+    "quotmark": "single",
+    "strict": true,
+    "trailing": true,
+    "undef": true,
+    "unused": "vars"
   }
 }

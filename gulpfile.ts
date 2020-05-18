@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 gRPC authors.
+ * Copyright 2019 gRPC authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,58 +15,70 @@
  *
  */
 
-import * as gulp from 'gulp';
-import * as healthCheck from './packages/grpc-health-check/gulpfile';
-import * as jsCore from './packages/grpc-js/gulpfile';
-import * as nativeCore from './packages/grpc-native-core/gulpfile';
-import * as protobuf from './packages/proto-loader/gulpfile';
-import * as internalTest from './test/gulpfile';
+ import * as gulp from 'gulp';
+ import * as jsdoc from 'gulp-jsdoc3';
+ import * as jshint from 'gulp-jshint';
+ import * as mocha from 'gulp-mocha';
+ import * as execa from 'execa';
+ import * as path from 'path';
+ import * as del from 'del';
 
-const root = __dirname;
+const nativeCoreDir = __dirname;
+const srcDir = path.resolve(nativeCoreDir, 'src');
+const testDir = path.resolve(nativeCoreDir, 'test');
 
-const installAll = gulp.parallel(jsCore.install, nativeCore.install, healthCheck.install, protobuf.install, internalTest.install);
+const pkg = require('./package');
+const jshintConfig = pkg.jshintConfig;
 
-const installAllWindows = gulp.parallel(jsCore.install, nativeCore.installWindows, healthCheck.install, protobuf.install, internalTest.install);
+const clean = () => del([path.resolve(nativeCoreDir, 'build'),
+	                       path.resolve(nativeCoreDir, 'ext/node')]);
 
-const lint = gulp.parallel(jsCore.lint, nativeCore.lint);
+const cleanAll = gulp.parallel(clean);
 
-const build = gulp.parallel(jsCore.compile, nativeCore.build, protobuf.compile);
+const install = () => {
+  return execa('npm', ['install', '--build-from-source', '--unsafe-perm'],
+               {cwd: nativeCoreDir, stdio: 'inherit'});
+};
 
-const link = gulp.series(healthCheck.linkAdd);
+const installWindows = () => {
+  return execa('npm', ['install', '--build-from-source'],
+               {cwd: nativeCoreDir, stdio: 'inherit'}).catch(() => 
+del(path.resolve(process.env.USERPROFILE, '.node-gyp', process.versions.node, 'include/node/openssl'), { force: true }).then(() =>
+del(path.resolve(process.env.USERPROFILE, 'AppData/Local/node-gyp/cache', process.versions.node, 'include/node/openssl'), { force: true })).then(() =>
+execa('npm', ['install', '--build-from-source'],
+               {cwd: nativeCoreDir, stdio: 'inherit'})
+               ));
+};
 
-const setup = gulp.series(installAll, link);
+const lint = () => {
+  return gulp.src([`${nativeCoreDir}/index.js`, `${srcDir}/*.js`, `${testDir}/*.js`])
+      .pipe(jshint(pkg.jshintConfig))
+      .pipe(jshint.reporter('default'));
+};
 
-const setupWindows = gulp.series(installAllWindows, link);
+const build = () => {
+  return execa('npm', ['run', 'build'], {cwd: nativeCoreDir, stdio: 'inherit'});
+};
 
-const setupPureJSInterop = gulp.parallel(jsCore.install, protobuf.install, internalTest.install);
+const runTests = () => {
+  return gulp.src(`${testDir}/*.js`).pipe(mocha({timeout: 5000, reporter: 'mocha-jenkins-reporter'}));
+}
 
-const clean = gulp.parallel(jsCore.clean, nativeCore.clean, protobuf.clean);
+const test = gulp.series(build, runTests);
 
-const cleanAll = gulp.parallel(jsCore.cleanAll, nativeCore.cleanAll, healthCheck.cleanAll, internalTest.cleanAll, protobuf.cleanAll);
-
-const nativeTestOnly = gulp.parallel(nativeCore.test, healthCheck.test);
-
-const nativeTest = gulp.series(build, nativeTestOnly);
-
-const testOnly = gulp.parallel(jsCore.test, nativeTestOnly, protobuf.test);
-
-const test = gulp.series(build, testOnly, internalTest.test);
-
-const docGen = gulp.series(nativeCore.docGen);
+const docGen = (cb) => {
+  var config = require('./jsdoc_conf.json');
+  return gulp.src([`${nativeCoreDir}/README.md`, `${nativeCoreDir}/index.js`, `${srcDir}/*.js`], {read: false})
+             .pipe(jsdoc(config, cb));
+};
 
 export {
-  installAll,
-  installAllWindows,
-  lint,
-  build,
-  link,
-  setup,
-  setupWindows,
-  setupPureJSInterop,
   clean,
   cleanAll,
-  nativeTestOnly,
-  nativeTest,
+  install,
+  installWindows,
+  lint,
+  build,
   test,
   docGen
 };

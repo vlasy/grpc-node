@@ -1,50 +1,80 @@
-[![Build Status](https://travis-ci.org/grpc/grpc-node.svg?branch=master)](https://travis-ci.org/grpc/grpc-node)
-# gRPC on Node.js
+[![npm](https://img.shields.io/npm/v/grpc.svg)](https://www.npmjs.com/package/grpc)
+# Node.js gRPC Library
 
-## Implementations
+## PREREQUISITES
+- `node`: This requires `node` to be installed, version `4.0` or above. If you instead have the `nodejs` executable on Debian, you should install the [`nodejs-legacy`](https://packages.debian.org/sid/nodejs-legacy) package.
 
-For a comparison of the features available in these two libraries, see [this document](https://github.com/grpc/grpc-node/tree/master/PACKAGE-COMPARISON.md)
+- **Note:** If you installed `node` via a package manager and the version is still less than `4.0`, try directly installing it from [nodejs.org](https://nodejs.org).
 
-### C-based Client and Server
+## INSTALLATION
 
-Directory: [`packages/grpc-native-core`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-native-core) (see here for installation information)
+Install the gRPC NPM package
 
-npm package: [grpc](https://www.npmjs.com/package/grpc).
+```sh
+npm install grpc
+```
 
-This is the existing, feature-rich implementation of gRPC using a C++ addon. It works on all LTS versions of Node.js on most platforms that Node.js runs on.
+## BUILD FROM SOURCE
 
-### Pure JavaScript Client
+The following command can be used to build from source when installing the package from npm:
 
-Directory: [`packages/grpc-js`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-js)
+```
+npm install grpc --build-from-source
+```
 
-npm package: [@grpc/grpc-js](https://www.npmjs.com/package/@grpc/grpc-js)
+The `--build-from-source` option will work even when installing another package that depends on `grpc`. To build only `grpc` from source, you can use the argument `--build-from-source=grpc`.
 
-**This library is currently incomplete and experimental. It is built on the [http2 Node module](https://nodejs.org/api/http2.html).**
+## ABOUT ELECTRON
 
-This library implements the core functionality of gRPC purely in JavaScript, without a C++ addon. It works on the latest version of Node.js on all platforms that Node.js runs on.
+The official electron documentation recommends to [build all of your native packages from source](https://electronjs.org/docs/tutorial/using-native-node-modules#modules-that-rely-on-node-pre-gyp). While the reasons behind this are technically good - many native extensions won't be packaged to work properly with electron - the gRPC source code is fairly difficult to build from source due to its complex nature, and we're also providing working electron pre-built binaries. Therefore, we recommend that you do not follow this model for using gRPC with electron. Also, for the same reason, `electron-rebuild` will always build from source. We advise you to not use this tool if you are depending on gRPC. Please note that there's not just one way to get native extensions running in electron, and that there's never any silver bullet for anything. The following instructions try to cater about some of the most generic ways, but different edge cases might require different methodologies.
 
-## Other Packages
+The best way to get gRPC to work with electron is to do this, possibly in the `postinstall` script of your `package.json` file:
 
-### gRPC Protobuf Loader
+```
+npm rebuild --target=2.0.0 --runtime=electron --dist-url=https://atom.io/download/electron
+```
 
-Directory: [`packages/proto-loader`](https://github.com/grpc/grpc-node/tree/master/packages/proto-loader)
+Note that the `2.0.0` above is the electron runtime version number. You will need to update this every time you go on a different version of the runtime.
 
-npm package: [@grpc/proto-loader](https://www.npmjs.com/package/@grpc/proto-loader)
+If you have more native dependencies than gRPC, and they work better when built from source, you can explicitely specify which extension to build the following way:
 
-This library loads `.proto` files into objects that can be passed to the gRPC libraries.
+```
+npm rebuild --build-from-source=sqlite3 --target=2.0.0 --runtime=electron --dist-url=https://atom.io/download/electron
+```
 
-### gRPC Tools
+This way, if you depend on both `grpc` and `sqlite3`, only the `sqlite3` package will be rebuilt from source, leaving the `grpc` package to use its precompiled binaries.
 
-Directory: [`packages/grpc-tools`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-tools)
+## BUILD IN GIT REPOSITORY
 
-npm package: [grpc-tools](https://www.npmjs.com/package/grpc-tools)
+ 1. Clone [the grpc-node Git Repository](https://github.com/grpc/grpc-node).
+ 2. Run `git submodule update --init --recursive` from the repository root.
+ 3. Run `cd packages/grpc-native-core`.
+ 4. Run `npm install --build-from-source`.
 
-Distribution of protoc and the gRPC Node protoc plugin for ease of installation with npm.
+ - **Note:** On Windows, this might fail due to [nodejs issue #4932](https://github.com/nodejs/node/issues/4932) in which case, you will see something like the following in `npm install`'s output (towards the very beginning):
 
-### gRPC Health Check Service
+    ```
+     ..
+     Building the projects in this solution one at a time. To enable parallel build, please add the "/m" switch.
+     WINDOWS_BUILD_WARNING
+      "..\IMPORTANT: Due to https:\github.com\nodejs\node\issues\4932, to build this library on Windows, you must first remove C:\Users\jenkins\.node-gyp\4.4.0\include\node\openssl"
+      ...
+      ..
+    ```
 
-Directory: [`packages/grpc-health-check`](https://github.com/grpc/grpc-node/tree/master/packages/grpc-health-check)
+    To fix this, you will have to delete the folder `C:\Users\<username>\.node-gyp\<node_version>\include\node\openssl` and retry `npm install`
 
-npm package: [grpc-health-check](https://www.npmjs.com/package/grpc-health-check)
+## CONFIGURE BINARIES' LOCATION
 
-Health check service for gRPC servers.
+You can configure the location from which the pre-compiled binaries are downloaded during installation.
+
+`npm install --grpc_node_binary_host_mirror=https://your-url.com`
+
+Or defining `grpc_node_binary_host_mirror` in your `.npmrc`.
+
+## API DOCUMENTATION
+
+See the [API Documentation](https://grpc.io/grpc/node/).
+
+## TESTING
+To run the test suite, simply run `npm test` in the install location.
