@@ -69,6 +69,7 @@ function handleError(call, error) {
         (new Metadata())._getCoreRepresentation();
   }
   error_batch[grpc.opType.SEND_STATUS_FROM_SERVER] = status;
+  console.log({ errorBatch: error_batch, metadataSent: call.metadataSent }, 'ErrorBatchDetail');
   call.startBatch(error_batch, function(){});
 }
 
